@@ -6,6 +6,19 @@
   background-color: #f0f0f0;
 }
 
+.chat-header {
+  text-align: center;
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #ffffff;
+  background-color: #007bff; /* bright blue header */
+  padding: 5 px;
+  border-radius: 8px 8px 0 0; /* rounded top corners */
+  margin-bottom: 10px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+
 .chat-container {
   width: 440px;
   height: 550px;
@@ -16,6 +29,7 @@
   flex-direction: column;
   padding: 10px;
 }
+
 
 .messages {
   flex-grow: 1;

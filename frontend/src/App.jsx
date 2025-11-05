@@ -18,7 +18,7 @@ function App() {
     window.location.hostname.includes("app.github.dev")
     ? "https://silver-space-robot-wj5p76jgxg4c69q-5000.app.github.dev" // Replace with YOUR Codespace backend URL
     : "http://127.0.0.1:5000";
-    
+
     try {
       const response = await fetch(`${backendUrl}/chat`, {
         method: 'POST',
@@ -47,6 +47,7 @@ function App() {
   return (
     <div className="App">
       <div className="chat-container">
+        <div className = "chat-header">Chefbot</div>
         <div className="messages">
           {messages.map((msg, index) => (
             <div key={index} className={`message ${msg.type}`}>
