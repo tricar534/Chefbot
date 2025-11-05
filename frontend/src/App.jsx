@@ -12,8 +12,13 @@ function App() {
     setMessages((prevMessages) => [...prevMessages, userMessage]);
     setInput('');
 
-    const backendUrl = 'https://silver-space-robot-wj5p76jgxg4c69q-5000.app.github.dev/';
-
+    // Detect if running inside Codespaces or locally
+    const backendUrl =
+    window.location.hostname.includes("github.dev") ||
+    window.location.hostname.includes("app.github.dev")
+    ? "https://silver-space-robot-wj5p76jgxg4c69q-5000.app.github.dev" // Replace with YOUR Codespace backend URL
+    : "http://127.0.0.1:5000";
+    
     try {
       const response = await fetch(`${backendUrl}/chat`, {
         method: 'POST',
