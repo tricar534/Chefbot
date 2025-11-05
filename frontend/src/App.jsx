@@ -44,10 +44,15 @@ function App() {
     }
   };
 
+  const clearchat = () => { setMessages( [] ); };
+
   return (
     <div className="App">
       <div className="chat-container">
-        <div className = "chat-header">Chefbot</div>
+        <div className = "chat-header">
+          <span className = "header-title"> Chefbot </span>
+          <button className= "clear-button" onClick={clearchat}>clear</button>
+          </div>
         <div className="messages">
           {messages.map((msg, index) => (
             <div key={index} className={`message ${msg.type}`}>
