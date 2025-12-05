@@ -19,7 +19,9 @@ DIET_PATTERN = re.compile(r"\b(vegetarian|vegan|high protein|low carb|keto)\b", 
 
 DIET_KEYWORDS = ["vegetarian", "vegan", "high protein", "low carb", "keto"]
 
+
 # Extract key diet restriction words 
+# EX: Turns "LoW CaRb" -> "low_carb"
 def extract_diet_restrictions(user_input):
     
     text_lower = user_input.lower()
@@ -30,6 +32,26 @@ def extract_diet_restrictions(user_input):
             found.append(known.replace(" ", "_"))
 
     return found
+
+# Extract ingredients and puts into list
+# EX: "chicken, rice and eggs" -> [ "chicken", "rice", "eggs"]
+def extract_ingredients(user_ingredients):
+    
+    if not user_ingredients:
+        return []
+    
+    split = re.split(r",| and | & ", user_ingredients, flags=re.IGNORECASE)
+    ingredients = []
+
+    for parts in split:
+        item = parts.strip().lower()
+        if item:
+            ingredients.append(item)
+
+    return ingredients
+
+
+
 
 if __name__ == "__main__":
     test_messages = [
