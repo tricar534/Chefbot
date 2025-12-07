@@ -68,11 +68,18 @@ def determine_intent(user_input):
     
     # Store cleaned up text
     result["user_input"] = clean_text
-    
-    
+
     # Find diet restrictions
     result["diet_restrictions"] = extract_diet_restrictions(text_lower)
     
+    # Gather all that was captured by INGREDIENT_PATTERN
+    found_ingredient = INGREDIENT_PATTERN.search(text_lower) 
+
+    # Capture ingredient if found
+    if found_ingredient:
+        captured = found_ingredient.group(1)
+        result["ingredients"] = extract_ingredients(captured)
+
     # Detect greeting
     if GREETING_PATTERN.search(text_lower):
         result["intent"] = INTENT_GREETING
@@ -82,15 +89,10 @@ def determine_intent(user_input):
     if MEAL_PLAN_PATTERN.search(text_lower):
         result["intent"] = INTENT_MEAL_PLAN
         return result
-   
-    # Gather all that was captured by INGREDIENT_PATTERN
-    found_ingredient = INGREDIENT_PATTERN.search(text_lower) 
     
     # Detect ingredient search
     if found_ingredient:
         result["intent"] = INTENT_INGREDIENT
-        captured = found_ingredient.group(1)
-        result["ingredients"] = extract_ingredients(captured)
         return result
     
     # Detect diet
@@ -104,27 +106,58 @@ def determine_intent(user_input):
 
 
 # ------------------ TESTING ------------------
-print("\n" + "=" * 50)
-print("INTENT SUMMARY")
-print("=" * 50)
+if __name__ == "__main__":
+    print("\n" + "=" * 50)
+    print("INTENT SUMMARY")
+    print("=" * 50)
 
-test_messages = [
-    "hello there",
-    "plan my meals",
-    "make a meal plan high protein",
-    "I want low carb and keto recipes",
-    "vegan please",
-    "what can I cook?",
-    "I have chicken, rice and eggs",
-    "I have eggs & milk, low carb please"
-]
+    test_messages = [
+        "",
 
-for msg in test_messages:
-    out = determine_intent(msg)
-    intent = out["intent"]
-    ingredients = ", ".join(out["ingredients"]) if out["ingredients"] else "-"
-    diets = ", ".join(out["diet_restrictions"]) if out["diet_restrictions"] else "-"
+        # Greetings
+        "hi",
+        "hello there",
+        "hey chefbot",
 
-    print(f"Input: {msg}")
-    print(f"  Intent: {intent} | Ingredients: {ingredients} | Diet: {diets}")
+        # Ingredient intent test
+        "I have chicken, rice and eggs",
+        "i have pasta and tomato sauce",
+        "I have bread, peanut butter & banana",
+        "ihave tuna and mayo",
+        "  I   have   chicken,   rice and eggs  ",
+
+        # Meal plan test
+        "meal plan",
+        "plan my meals",
+        "make a meal plan",
+        "make a meal plan high protein",
+        "plan my meals low carb",
+
+        # Diet test
+        "vegan please",
+        "vegetarian recipes",
+        "low carb ideas",
+        "high protein meals",
+        "keto options",
+
+        # Unknown
+        "what can I cook?",
+        "suggest something tasty",
+        "I am hungry",
+
+        # Close case
+        "I have",
+        "I want a meal plan and I have chicken",
+        "hello I have eggs",
+    ]
+
+
+    for msg in test_messages:
+        out = determine_intent(msg)
+        intent = out["intent"]
+        ingredients = ", ".join(out["ingredients"]) if out["ingredients"] else "-"
+        diets = ", ".join(out["diet_restrictions"]) if out["diet_restrictions"] else "-"
+
+        print(f"Input: {msg}")
+        print(f"  Intent: {intent} | Ingredients: {ingredients} | Diet: {diets}\n")
 # ---------------------------------------------
