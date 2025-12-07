@@ -46,29 +46,29 @@ def extract_ingredients(user_ingredients):
             ingredients.append(item)
 
     return ingredients
-
+# ------------------------------------
 
 # Uses regex rules to identify intent (ingredients, diet restrictions )
 def determine_intent(user_input):
 
-    # If user input empty
-    if not user_input:
-        return {
-                "intent": INTENT_OTHER,
-                "ingredients": [],
-                "diet_restrictions": [],
-                "user_input": user_input
-               }
-    
-    clean_text = user_input.strip()
-    text_lower = clean_text.lower()
-    
     result =  {
                 "intent": INTENT_OTHER,
                 "ingredients": [],
                 "diet_restrictions": [],
-                "user_input": clean_text
+                "user_input": user_input
               }
+
+    # If user input empty
+    if not user_input:
+        return result
+    
+    # Clean up input
+    clean_text = user_input.strip()
+    text_lower = clean_text.lower()
+    
+    # Store cleaned up text
+    result["user_input"] = clean_text
+    
     
     # Find diet restictions
     result["diet_restrictions"] = extract_diet_restrictions(text_lower)
