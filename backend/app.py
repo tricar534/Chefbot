@@ -1,28 +1,32 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 
+from intents import determine_intent
+
 app = Flask(__name__)
 # Enable CORS to allow the React frontend to communicate with the Flask backend
 CORS(app)
 
-# Simple rule-based response logic
-def get_bot_response(user_input):
-    user_input = user_input.lower()
-    if "hello" in user_input or "hi" in user_input:
-        return "Hi there! I'm a simple local bot."
-    elif "how are you" in user_input:
-        return "I'm doing great, thanks for asking!"
-    elif "bye" in user_input or "quit" in user_input:
-        return "Goodbye! Have a nice day."
-    else:
-        return "Sorry, I didn't understand that. Try asking about 'hello' or 'bye'."
 
 @app.route('/chat', methods=['POST'])
 def chat():
-    data = request.get_json()
+    # If request is none => {}
+    data = request.get_json() or {} 
     user_message = data.get('message', '')
-    bot_response = get_bot_response(user_message)
-    return jsonify({"response": bot_response})
+
+    intent_data = determine_intent(user_message)
+
+    # Temp readable message for UI
+    response_text =(
+        f"Intent: {intent_data['intent']} | "
+        f"Ingredients: {intent_data['ingredients']} | "
+        f"Diet: {intent_data['diet_restrictions']}"
+    )
+
+    return jsonify({
+        "response": response_text, 
+        "intent_data": intent_data    
+    })
 
 if __name__ == '__main__':
     # Run the Flask app on localhost:5000
