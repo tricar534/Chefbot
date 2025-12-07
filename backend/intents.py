@@ -70,7 +70,7 @@ def determine_intent(user_input):
     result["user_input"] = clean_text
     
     
-    # Find diet restictions
+    # Find diet restrictions
     result["diet_restrictions"] = extract_diet_restrictions(text_lower)
     
     # Detect greeting
@@ -103,6 +103,7 @@ def determine_intent(user_input):
     return result
 
 
+# TESTING 
 if __name__ == "__main__":
     test_messages = [
         "hello there",
@@ -110,7 +111,7 @@ if __name__ == "__main__":
         "make a meal plan high protein",
         "I want low carb and keto recipes",
         "vegan please",
-        "what can I cook?"
+        "What can I cook?"
     ]
 
     print("=== REGEX MATCH TESTS ===")
@@ -125,3 +126,12 @@ if __name__ == "__main__":
     print(extract_diet_restrictions("I want low carb and keto recipes"))
     print(extract_diet_restrictions("High protein please"))
     print(extract_diet_restrictions("No restrictions"))
+
+    print("\n=== DETERMINE INTENT TESTS ===")
+    for msg in test_messages:
+        print(determine_intent(msg))
+
+    print(determine_intent(""))
+    print(determine_intent("   "))
+    print(determine_intent("I have chicken, rice and eggs"))
+    print(determine_intent("I have eggs & milk, low carb please"))
