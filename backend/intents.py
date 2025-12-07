@@ -103,35 +103,28 @@ def determine_intent(user_input):
     return result
 
 
-# TESTING 
-if __name__ == "__main__":
-    test_messages = [
-        "hello there",
-        "plan my meals",
-        "make a meal plan high protein",
-        "I want low carb and keto recipes",
-        "vegan please",
-        "What can I cook?"
-    ]
+# ------------------ TESTING ------------------
+print("\n" + "=" * 50)
+print("INTENT SUMMARY")
+print("=" * 50)
 
-    print("=== REGEX MATCH TESTS ===")
-    for msg in test_messages:
-        print(f"\nMessage: {msg}")
-        print(" greeting match:", bool(GREETING_PATTERN.search(msg)))
-        print(" ingredient match:", bool(INGREDIENT_PATTERN.search(msg)))
-        print(" meal plan match:", bool(MEAL_PLAN_PATTERN.search(msg)))
-        print(" diet match:", bool(DIET_PATTERN.search(msg)))
+test_messages = [
+    "hello there",
+    "plan my meals",
+    "make a meal plan high protein",
+    "I want low carb and keto recipes",
+    "vegan please",
+    "what can I cook?",
+    "I have chicken, rice and eggs",
+    "I have eggs & milk, low carb please"
+]
 
-    print("\n=== DIET EXTRACTION TESTS ===")
-    print(extract_diet_restrictions("I want low carb and keto recipes"))
-    print(extract_diet_restrictions("High protein please"))
-    print(extract_diet_restrictions("No restrictions"))
+for msg in test_messages:
+    out = determine_intent(msg)
+    intent = out["intent"]
+    ingredients = ", ".join(out["ingredients"]) if out["ingredients"] else "-"
+    diets = ", ".join(out["diet_restrictions"]) if out["diet_restrictions"] else "-"
 
-    print("\n=== DETERMINE INTENT TESTS ===")
-    for msg in test_messages:
-        print(determine_intent(msg))
-
-    print(determine_intent(""))
-    print(determine_intent("   "))
-    print(determine_intent("I have chicken, rice and eggs"))
-    print(determine_intent("I have eggs & milk, low carb please"))
+    print(f"Input: {msg}")
+    print(f"  Intent: {intent} | Ingredients: {ingredients} | Diet: {diets}")
+# ---------------------------------------------
