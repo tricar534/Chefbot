@@ -10,15 +10,12 @@ INTENT_OTHER = "unknown_intent"
 # Simple regex patterns
 
 GREETING_PATTERN = re.compile(r"\b(hi|hello|hey)\b", re.IGNORECASE)
-
 INGREDIENT_PATTERN = re.compile(r"\bi\s*have\s+(.+)", re.IGNORECASE)
-
 MEAL_PLAN_PATTERN = re.compile(r"\b(meal plan|plan my meal|plan my meals|make a meal plan)\b", re.IGNORECASE)
-
 DIET_PATTERN = re.compile(r"\b(vegetarian|vegan|high protein|low carb|keto)\b", re.IGNORECASE)
-
 DIET_KEYWORDS = ["vegetarian", "vegan", "high protein", "low carb", "keto"]
 
+# --------Helper functions-----------
 
 # Extract key diet restriction words 
 # EX: Turns "LoW CaRb" -> "low_carb"
@@ -49,6 +46,61 @@ def extract_ingredients(user_ingredients):
             ingredients.append(item)
 
     return ingredients
+
+
+# Uses regex rules to identify intent (ingredients, diet restrictions )
+def determine_intent(user_input):
+
+    # If user input empty
+    if not user_input:
+        return {
+                "intent": INTENT_OTHER,
+                "ingredients": [],
+                "diet_restrictions": [],
+                "user_input": user_input
+               }
+    
+    clean_text = user_input.strip()
+    text_lower = clean_text.lower()
+    
+    result =  {
+                "intent": INTENT_OTHER,
+                "ingredients": [],
+                "diet_restrictions": [],
+                "user_input": clean_text
+              }
+    
+    # Find diet restictions
+    result["diet_restrictions"] = extract_diet_restrictions(text_lower)
+    
+    # Detect greeting
+    if GREETING_PATTERN.search(text_lower):
+        result["intent"] = INTENT_GREETING
+        return result
+    
+    # Detect meal plan 
+    if MEAL_PLAN_PATTERN.search(text_lower):
+        result["intent"] = INTENT_MEAL_PLAN
+        return result
+    
+    
+    # Detect ingredient search
+    if INGREDIENT_PATTERN.search(text_lower):
+        result["intent"] = INTENT_INGREDIENT
+        return result
+    
+    # Detect diet
+    if DIET_PATTERN.search(text_lower):
+        result["intent"] = INTENT_DIET
+        return result
+    
+
+    # Unknown intent
+    return result
+
+
+
+
 
 
 
