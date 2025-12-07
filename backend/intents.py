@@ -82,11 +82,15 @@ def determine_intent(user_input):
     if MEAL_PLAN_PATTERN.search(text_lower):
         result["intent"] = INTENT_MEAL_PLAN
         return result
-    
+   
+    # Gather all that was captured by INGREDIENT_PATTERN
+    found_ingredient = INGREDIENT_PATTERN.search(text_lower) 
     
     # Detect ingredient search
-    if INGREDIENT_PATTERN.search(text_lower):
+    if found_ingredient:
         result["intent"] = INTENT_INGREDIENT
+        captured = found_ingredient.group(1)
+        result["ingredients"] = extract_ingredients(captured)
         return result
     
     # Detect diet
@@ -97,12 +101,6 @@ def determine_intent(user_input):
 
     # Unknown intent
     return result
-
-
-
-
-
-
 
 
 if __name__ == "__main__":
