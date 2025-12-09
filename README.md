@@ -16,6 +16,16 @@ To start create 2 terminals that happen in the frontend and backend (cd to respe
 Also create port 5000 and set its visibility to public (will find a fix on this later)
 Make sure that the backendUrl in app.jsx (frontend) matches with the current port local address (will find a permanent fix later but i had to input it manually since i was using github Codespaces)
 
+### Faster Method (sets up both ports at the same time)
+Enter 
+```
+./setup.sh
+chmod +x start.sh
+./ start.sh
+```
+
+If it says that ports could not be be set public, manually change port visibility of ports 5000 and 5173 to public
+
 ### Terminal 1 (backend)
 Enter follwing comnmands
 
