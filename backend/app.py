@@ -1,6 +1,14 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from intents import determine_intent
+from recommender import (
+    search_recipes_by_ingredients,
+    filter_by_diet,
+    format_recipe_response,
+    get_recipe_by_id,
+    format_recipe_details,
+    get_recipe_count
+)
 import logging
 
 app = Flask(__name__)
@@ -20,6 +28,10 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
+
+# Log recipe count at startup
+recipe_count = get_recipe_count()
+logger.info(f"Database contains {recipe_count} recipes")
 
 
 @app.route('/chat', methods=['POST'])
@@ -49,12 +61,39 @@ def chat():
         intent_data = determine_intent(user_message)
         logger.info(f"Detected intent: {intent_data['intent']}")
         
-        # Format response for UI
-        response_text = (
-            f"Intent: {intent_data['intent']} | "
-            f"Ingredients: {intent_data['ingredients']} | "
-            f"Diet: {intent_data['diet_restrictions']}"
-        )
+        response_text = ""
+        
+        # Handle different intents
+        if intent_data['intent'] == 'greeting':
+            response_text = "Hello! I'm Chefbot 👨‍🍳 Tell me what ingredients you have and I'll suggest some recipes!"
+        
+        elif intent_data['intent'] == 'ingredient_search':
+            ingredients = intent_data['ingredients']
+            diet_restrictions = intent_data['diet_restrictions']
+            
+            if not ingredients:
+                response_text = "Please tell me what ingredients you have. For example: 'I have chicken, rice, and tomatoes'"
+            else:
+                logger.info(f"Searching recipes for ingredients: {ingredients}, diet: {diet_restrictions}")
+                
+                # Search for recipes (no ALL_RECIPES needed - it queries the DB directly)
+                results = search_recipes_by_ingredients(ingredients, max_results=5)
+                
+                # Filter by diet if specified
+                if diet_restrictions:
+                    results = filter_by_diet(results, diet_restrictions)
+                
+                response_text = format_recipe_response(results, ingredients)
+        
+        elif intent_data['intent'] == 'meal_plan':
+            response_text = "Meal planning feature coming soon! For now, tell me what ingredients you have and I'll find recipes for you."
+        
+        elif intent_data['intent'] == 'diet_restrictions':
+            diet = intent_data['diet_restrictions']
+            response_text = f"Got it! Looking for {', '.join(diet)} recipes. What ingredients do you have?"
+        
+        else:
+            response_text = "I can help you find recipes! Tell me what ingredients you have, like 'I have chicken and rice'"
 
         return jsonify({
             "response": response_text, 
