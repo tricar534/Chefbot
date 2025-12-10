@@ -33,6 +33,10 @@ logger = logging.getLogger(__name__)
 recipe_count = get_recipe_count()
 logger.info(f"Database contains {recipe_count} recipes")
 
+# Store last search results per session (simple in-memory storage)
+# In production, you'd use Redis or a proper session store
+last_search_results = {}
+
 
 @app.route('/chat', methods=['POST'])
 def chat():
@@ -61,11 +65,21 @@ def chat():
         intent_data = determine_intent(user_message)
         logger.info(f"Detected intent: {intent_data['intent']}")
         
+        # Generate a simple session ID (in production, use proper session management)
+        # For now, we'll use a simple approach - store globally (works for single user testing)
+        session_id = "default"
+        
         response_text = ""
         
         # Handle different intents
         if intent_data['intent'] == 'greeting':
-            response_text = "Hello! I'm Chefbot 👨‍🍳 Tell me what ingredients you have and I'll suggest some recipes!"
+            response_text = (
+                "Hello! I'm Chefbot 👨‍🍳\n\n"
+                "Tell me what you'd like to cook:\n"
+                "• 'I have [ingredients]' - Find recipes with your ingredients\n"
+                "• 'I want a [diet] with [ingredients]' - Filter by diet (vegan, vegetarian, keto, low carb)\n\n"
+                "Example: 'I want a vegan meal with rice and beans'"
+            )
         
         elif intent_data['intent'] == 'ingredient_search':
             ingredients = intent_data['ingredients']
@@ -76,12 +90,21 @@ def chat():
             else:
                 logger.info(f"Searching recipes for ingredients: {ingredients}, diet: {diet_restrictions}")
                 
+                # Search for more recipes if diet filter is applied (many will be filtered out)
+                search_limit = 20 if diet_restrictions else 10
+                
                 # Search for recipes (no ALL_RECIPES needed - it queries the DB directly)
-                results = search_recipes_by_ingredients(ingredients, max_results=5)
+                results = search_recipes_by_ingredients(ingredients, max_results=search_limit)
+                logger.info(f"Found {len(results)} recipes before filtering")
                 
                 # Filter by diet if specified
                 if diet_restrictions:
+                    logger.info(f"Applying diet filter: {diet_restrictions}")
                     results = filter_by_diet(results, diet_restrictions)
+                    logger.info(f"Recipes after diet filter: {len(results)}")
+                
+                # Store results for later detail requests
+                last_search_results[session_id] = results
                 
                 response_text = format_recipe_response(results, ingredients)
         
@@ -90,7 +113,42 @@ def chat():
         
         elif intent_data['intent'] == 'diet_restrictions':
             diet = intent_data['diet_restrictions']
-            response_text = f"Got it! Looking for {', '.join(diet)} recipes. What ingredients do you have?"
+            ingredients = intent_data['ingredients']
+            
+            # If they provided ingredients with diet, search now
+            if ingredients:
+                logger.info(f"Searching recipes for ingredients: {ingredients}, diet: {diet}")
+                
+                # Search for more recipes when diet filter is applied
+                search_limit = 20 if diet else 10
+                results = search_recipes_by_ingredients(ingredients, max_results=search_limit)
+                logger.info(f"Found {len(results)} recipes before filtering")
+                
+                if diet:
+                    logger.info(f"Applying diet filter: {diet}")
+                    results = filter_by_diet(results, diet)
+                    logger.info(f"Recipes after diet filter: {len(results)}")
+                
+                # Store results for later detail requests
+                last_search_results[session_id] = results
+                
+                response_text = format_recipe_response(results, ingredients)
+            else:
+                # No ingredients provided, ask for them
+                response_text = f"Got it! Looking for {', '.join(diet)} recipes. What ingredients do you have?"
+        
+        elif intent_data['intent'] == 'recipe_detail':
+            recipe_number = intent_data.get('recipe_number')
+            
+            # Check if we have stored results
+            if session_id not in last_search_results or not last_search_results[session_id]:
+                response_text = "Please search for recipes first! Try: 'I have chicken and rice'"
+            elif recipe_number < 1 or recipe_number > len(last_search_results[session_id]):
+                response_text = f"Please enter a number between 1 and {len(last_search_results[session_id])}"
+            else:
+                # Get the recipe (subtract 1 for 0-indexed array)
+                recipe = last_search_results[session_id][recipe_number - 1]
+                response_text = format_recipe_details(recipe)
         
         else:
             response_text = "I can help you find recipes! Tell me what ingredients you have, like 'I have chicken and rice'"

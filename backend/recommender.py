@@ -14,7 +14,7 @@ def get_db_connection():
 
 def search_recipes_by_ingredients(
     ingredients: List[str], 
-    max_results: int = 5
+    max_results: int = 20  # Increased from 5 to 20 for better filtering
 ) -> List[Dict]:
     """
     Search for recipes that match the given ingredients.
@@ -51,7 +51,7 @@ def search_recipes_by_ingredients(
             WHERE {where_clause}
             LIMIT ?
         """
-        params.append(max_results)
+        params.append(max_results * 3)  # Get 3x more results to allow for filtering
         
         cursor.execute(query, params)
         rows = cursor.fetchall()
@@ -76,7 +76,7 @@ def search_recipes_by_ingredients(
         # Sort by match count (descending)
         recipes.sort(key=lambda x: x['match_count'], reverse=True)
         
-        return recipes
+        return recipes[:max_results]  # Return only max_results after sorting
     
     finally:
         conn.close()
@@ -98,36 +98,62 @@ def filter_by_diet(recipes: List[Dict], diet_restrictions: List[str]) -> List[Di
     
     filtered = []
     
+    # Expanded meat keywords for vegetarian/vegan
+    meat_keywords = [
+        'chicken', 'beef', 'pork', 'lamb', 'turkey', 'duck', 'goose',
+        'meat', 'bacon', 'sausage', 'ham', 'prosciutto', 'salami',
+        'fish', 'salmon', 'tuna', 'cod', 'shrimp', 'crab', 'lobster',
+        'anchovy', 'sardine', 'trout', 'tilapia', 'halibut',
+        'steak', 'ribs', 'chop', 'cutlet', 'ground beef', 'ground pork',
+        'pepperoni', 'chorizo', 'veal', 'venison', 'bison'
+    ]
+    
+    # Animal products for vegan
+    animal_keywords = [
+        'milk', 'cheese', 'butter', 'egg', 'cream', 'yogurt', 'honey',
+        'whey', 'casein', 'lactose', 'ghee', 'buttermilk', 'sour cream',
+        'mayonnaise', 'mayo', 'gelatin', 'lard'
+    ]
+    
+    # High carb foods for keto
+    high_carb = [
+        'bread', 'pasta', 'rice', 'potato', 'flour', 'sugar',
+        'noodle', 'tortilla', 'bagel', 'cereal', 'oat', 'quinoa',
+        'corn', 'wheat', 'barley', 'couscous'
+    ]
+    
     for recipe in recipes:
-        # Check ingredients and title for diet keywords
-        recipe_text = (recipe.get('ingredients', '') + ' ' + 
-                      recipe.get('title', '')).lower()
+        # Check ingredients, title, and instructions
+        recipe_text = (
+            recipe.get('ingredients', '') + ' ' + 
+            recipe.get('title', '') + ' ' +
+            recipe.get('instructions', '')
+        ).lower()
         
-        # Diet-specific filtering logic
         is_valid = True
         
         for diet in diet_restrictions:
             diet_lower = diet.lower().replace('_', ' ')
             
             # Check for vegetarian (no meat)
-            if 'vegetarian' in diet_lower or 'vegan' in diet_lower:
-                meat_keywords = ['chicken', 'beef', 'pork', 'lamb', 'turkey', 
-                                'meat', 'bacon', 'sausage', 'ham', 'fish', 'salmon']
+            if 'vegetarian' in diet_lower:
                 if any(meat in recipe_text for meat in meat_keywords):
                     is_valid = False
                     break
             
-            # Check for vegan (no animal products)
+            # Check for vegan (no meat AND no animal products)
             if 'vegan' in diet_lower:
-                animal_keywords = ['milk', 'cheese', 'butter', 'egg', 'cream', 
-                                  'yogurt', 'honey']
+                # Check for meat
+                if any(meat in recipe_text for meat in meat_keywords):
+                    is_valid = False
+                    break
+                # Check for animal products
                 if any(animal in recipe_text for animal in animal_keywords):
                     is_valid = False
                     break
             
-            # Check for keto/low carb (look for low-carb ingredients)
-            if 'keto' in diet_lower or 'low carb' in diet_lower:
-                high_carb = ['bread', 'pasta', 'rice', 'potato', 'flour', 'sugar']
+            # Check for keto/low carb (ONLY apply this if keto/low carb is specified)
+            if 'keto' in diet_lower or 'low_carb' in diet_lower or 'low carb' in diet_lower:
                 if any(carb in recipe_text for carb in high_carb):
                     is_valid = False
                     break
@@ -185,7 +211,13 @@ def format_recipe_response(recipes: List[Dict], searched_ingredients: List[str])
         Formatted string with recipe information
     """
     if not recipes:
-        return f"Sorry, I couldn't find any recipes with {', '.join(searched_ingredients)}. Try different ingredients!"
+        return (
+            f"Sorry, I couldn't find any recipes matching your criteria with {', '.join(searched_ingredients)}.\n\n"
+            f"💡 Try:\n"
+            f"• Using different ingredients\n"
+            f"• Removing diet restrictions\n"
+            f"• Being more general (e.g., 'vegetables' instead of specific veggies)"
+        )
     
     response_lines = [f"🍳 Found {len(recipes)} recipe(s) for you:\n"]
     
@@ -199,12 +231,13 @@ def format_recipe_response(recipes: List[Dict], searched_ingredients: List[str])
         ingredients_preview = ', '.join([ing.strip() for ing in ingredients_list if ing.strip()])
         
         response_lines.append(
-            f"\n{i}. 📝 {title}\n"
+            f"{i}. 📝 {title}\n"
             f"   ✓ Matches {match_count}/{len(searched_ingredients)} of your ingredients\n"
-            f"   🛒 Preview: {ingredients_preview}..."
+            f"   🛒 Preview: {ingredients_preview}...\n"
+            f"   {'─' * 50}"  # Add separator line
         )
     
-    response_lines.append("\n\n💡 Type 'recipe 1' to see full details of the first recipe!")
+    response_lines.append("\n💡 Reply with the recipe number (e.g., '1') to see full details!")
     
     return "\n".join(response_lines)
 
@@ -259,28 +292,3 @@ def get_recipe_count() -> int:
         return count
     finally:
         conn.close()
-
-
-# ------------------ TESTING ------------------
-if __name__ == "__main__":
-    print("Testing Recipe Search with SQLite...")
-    print("=" * 50)
-    
-    # Get recipe count
-    count = get_recipe_count()
-    print(f"Database contains {count} recipes\n")
-    
-    # Test search
-    test_ingredients = ["chicken", "garlic"]
-    print(f"Searching for recipes with: {', '.join(test_ingredients)}")
-    print("=" * 50)
-    
-    results = search_recipes_by_ingredients(test_ingredients, max_results=3)
-    print(format_recipe_response(results, test_ingredients))
-    
-    # Show first recipe details
-    if results:
-        print("\n" + "=" * 50)
-        print("Details of first recipe:")
-        print("=" * 50)
-        print(format_recipe_details(results[0]))
