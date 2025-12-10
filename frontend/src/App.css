@@ -63,11 +63,14 @@
 .messages {
   flex-grow: 1;
   overflow-y: auto;
-  margin: 12px 0;
-  padding: 4px 2px;
+  margin: 12px 0 10px;
+  padding: 12px 10px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
+  background: #020617;
+  border-radius: 16px;
+  border: 1px solid #1f2937;
 }
 
 /* message bubbles*/
@@ -79,7 +82,7 @@
   word-wrap: break-word;
   font-size: medium;
   margin: 2px;
-  white-space: pre-line;
+  white-space: pre-line; /* fixes line breaks*/
 }
 
 .message.user {
@@ -111,11 +114,12 @@
   background-color: #020617;
 }
 
+/* send button */
 .input-area button {
   padding: 10px 20px;
   border: none;
   border-radius: 999px;
-  background-color: #007bff;
+  background-color: #1d4ed8;
   color: white;
   cursor: pointer;
 }
