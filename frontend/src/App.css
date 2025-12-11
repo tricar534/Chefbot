@@ -21,6 +21,7 @@
   flex-direction: column;
   padding: 4px 20px;
   box-sizing: border-box;
+  color: white;
 }
 
 .chat-header {
@@ -98,12 +99,14 @@
   border-bottom-left-radius: 4px;
   border: 1px solid #4b5563;   /* subtle border */
   font-size: 0.9rem;           /* slightly smaller text */
+  color: white;
 }
 
 .input-area {
   display: flex;
   gap: 8px;
   margin-top: 2px ;
+  color: white;
 }
 
 .input-area input {
@@ -112,6 +115,8 @@
   border: 1px solid #ccc;
   border-radius: 999px;
   background-color: #020617;
+  color: white;
+  
 }
 
 /* send button */
