@@ -6,6 +6,7 @@ INTENT_INGREDIENT = "ingredient_search"
 INTENT_MEAL_PLAN = "meal_plan"
 INTENT_DIET = "diet_restrictions"
 INTENT_RECIPE_DETAIL = "recipe_detail"
+INTENT_CLEAR_DIET = "clear_diet"
 INTENT_OTHER = "unknown_intent"
 
 # Simple regex patterns

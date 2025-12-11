@@ -36,6 +36,7 @@ logger.info(f"Database contains {recipe_count} recipes")
 # Store last search results per session (simple in-memory storage)
 # In production, you'd use Redis or a proper session store
 last_search_results = {}
+user_sessions = {}  # Store user preferences (diet, etc.)
 
 
 @app.route('/chat', methods=['POST'])
@@ -69,21 +70,43 @@ def chat():
         # For now, we'll use a simple approach - store globally (works for single user testing)
         session_id = "default"
         
+        # Initialize session if it doesn't exist
+        if session_id not in user_sessions:
+            user_sessions[session_id] = {
+                'diet_restrictions': [],
+                'last_intent': None
+            }
+        
         response_text = ""
         
         # Handle different intents
         if intent_data['intent'] == 'greeting':
+            # Show current diet restrictions if any
+            current_diet = user_sessions[session_id]['diet_restrictions']
+            diet_info = f"\n🔖 Active diet filter: {', '.join(current_diet)}" if current_diet else ""
+            
             response_text = (
                 "Hello! I'm Chefbot 👨‍🍳\n\n"
                 "Tell me what you'd like to cook:\n"
                 "• 'I have [ingredients]' - Find recipes with your ingredients\n"
-                "• 'I want a [diet] with [ingredients]' - Filter by diet (vegan, vegetarian, keto, low carb)\n\n"
-                "Example: 'I want a vegan meal with rice and beans'"
+                "• 'I want a [diet] meal' - Set diet preference (vegan, vegetarian, keto, low carb)\n"
+                "• 'I want a [diet] with [ingredients]' - Search with diet filter\n"
+                "• 'clear diet' - Remove diet restrictions\n\n"
+                f"Example: 'I want a vegan meal' then 'I have rice and beans'{diet_info}"
             )
         
         elif intent_data['intent'] == 'ingredient_search':
             ingredients = intent_data['ingredients']
             diet_restrictions = intent_data['diet_restrictions']
+            
+            # If no diet restrictions in current message, use stored ones
+            if not diet_restrictions and user_sessions[session_id]['diet_restrictions']:
+                diet_restrictions = user_sessions[session_id]['diet_restrictions']
+                logger.info(f"Using stored diet restrictions: {diet_restrictions}")
+            
+            # Store diet restrictions if provided
+            if diet_restrictions:
+                user_sessions[session_id]['diet_restrictions'] = diet_restrictions
             
             if not ingredients:
                 response_text = "Please tell me what ingredients you have. For example: 'I have chicken, rice, and tomatoes'"
@@ -107,6 +130,10 @@ def chat():
                 last_search_results[session_id] = results
                 
                 response_text = format_recipe_response(results, ingredients)
+                
+                # Add note if using stored diet preferences
+                if diet_restrictions and not intent_data['diet_restrictions']:
+                    response_text += f"\n\n🔖 Filtered by: {', '.join(diet_restrictions)} (from your previous request)"
         
         elif intent_data['intent'] == 'meal_plan':
             response_text = "Meal planning feature coming soon! For now, tell me what ingredients you have and I'll find recipes for you."
@@ -114,6 +141,11 @@ def chat():
         elif intent_data['intent'] == 'diet_restrictions':
             diet = intent_data['diet_restrictions']
             ingredients = intent_data['ingredients']
+            
+            # Store diet restrictions in session
+            if diet:
+                user_sessions[session_id]['diet_restrictions'] = diet
+                logger.info(f"Stored diet restrictions in session: {diet}")
             
             # If they provided ingredients with diet, search now
             if ingredients:
@@ -135,7 +167,7 @@ def chat():
                 response_text = format_recipe_response(results, ingredients)
             else:
                 # No ingredients provided, ask for them
-                response_text = f"Got it! Looking for {', '.join(diet)} recipes. What ingredients do you have?"
+                response_text = f"Got it! I'll look for {', '.join(diet)} recipes. What ingredients do you have?"
         
         elif intent_data['intent'] == 'recipe_detail':
             recipe_number = intent_data.get('recipe_number')
@@ -149,6 +181,12 @@ def chat():
                 # Get the recipe (subtract 1 for 0-indexed array)
                 recipe = last_search_results[session_id][recipe_number - 1]
                 response_text = format_recipe_details(recipe)
+        
+        elif intent_data['intent'] == 'clear_diet':
+            # Clear stored diet restrictions
+            user_sessions[session_id]['diet_restrictions'] = []
+            logger.info("Cleared diet restrictions from session")
+            response_text = "✅ Diet restrictions cleared! You can now search for any recipes."
         
         else:
             response_text = "I can help you find recipes! Tell me what ingredients you have, like 'I have chicken and rice'"
