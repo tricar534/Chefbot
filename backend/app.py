@@ -89,10 +89,11 @@ def chat():
                 "Hello! I'm Chefbot 👨‍🍳\n\n"
                 "Tell me what you'd like to cook:\n"
                 "• 'I have [ingredients]' - Find recipes with your ingredients\n"
-                "• 'I want a [diet] meal' - Set diet preference (vegan, vegetarian, keto, low carb)\n"
+                "• 'I want a [diet] meal' - Set diet for next search (one-time use)\n"
                 "• 'I want a [diet] with [ingredients]' - Search with diet filter\n"
-                "• 'clear diet' - Remove diet restrictions\n\n"
-                f"Example: 'I want a vegan meal' then 'I have rice and beans'{diet_info}"
+                "• 'remove [diet]' or 'clear diet' - Remove diet restrictions\n\n"
+                f"Example: 'I want a vegan meal' then 'I have rice and beans'{diet_info}\n\n"
+                f"💡 Diet filters auto-clear after each search!"
             )
         
         elif intent_data['intent'] == 'ingredient_search':
@@ -131,9 +132,19 @@ def chat():
                 
                 response_text = format_recipe_response(results, ingredients)
                 
+                # Clear diet restrictions after showing recipes (one-time use)
+                if user_sessions[session_id]['diet_restrictions']:
+                    user_sessions[session_id]['diet_restrictions'] = []
+                    logger.info("Auto-cleared diet restrictions after showing results")
+                
                 # Add note if using stored diet preferences
                 if diet_restrictions and not intent_data['diet_restrictions']:
                     response_text += f"\n\n🔖 Filtered by: {', '.join(diet_restrictions)} (from your previous request)"
+                
+                # Clear diet restrictions after showing recipes (one-time use)
+                if user_sessions[session_id]['diet_restrictions']:
+                    user_sessions[session_id]['diet_restrictions'] = []
+                    logger.info("Auto-cleared diet restrictions after showing results")
         
         elif intent_data['intent'] == 'meal_plan':
             response_text = "Meal planning feature coming soon! For now, tell me what ingredients you have and I'll find recipes for you."
@@ -184,9 +195,14 @@ def chat():
         
         elif intent_data['intent'] == 'clear_diet':
             # Clear stored diet restrictions
+            cleared_diets = user_sessions[session_id]['diet_restrictions'].copy()
             user_sessions[session_id]['diet_restrictions'] = []
             logger.info("Cleared diet restrictions from session")
-            response_text = "✅ Diet restrictions cleared! You can now search for any recipes."
+            
+            if cleared_diets:
+                response_text = f"✅ Removed {', '.join(cleared_diets)} filter. You can now search for any recipes!"
+            else:
+                response_text = "✅ No diet restrictions were active. You can search for any recipes!"
         
         else:
             response_text = "I can help you find recipes! Tell me what ingredients you have, like 'I have chicken and rice'"
