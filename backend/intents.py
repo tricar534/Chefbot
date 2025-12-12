@@ -34,7 +34,7 @@ DIET_PATTERN = re.compile(r"\b(vegetarian|vegan|high protein|low carb|keto)\b", 
 # Pattern to detect recipe number requests: "1", "recipe 1", "show me 2", etc.
 RECIPE_NUMBER_PATTERN = re.compile(r"^(?:recipe\s+)?(\d+)$|^(?:show\s+(?:me\s+)?)?(\d+)$", re.IGNORECASE)
 
-CLEAR_DIET_PATTERN = re.compile(r"\bclear\s+(?:my\s+)?diet(?:\s+preferences)?\b")
+CLEAR_DIET_PATTERN = re.compile(r"\b(clear|remove)\s+(?:my\s+)?diet(?:\s+preferences)?\b")
 
 DIET_KEYWORDS = [
     "vegetarian", 
