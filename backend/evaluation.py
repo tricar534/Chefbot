@@ -1,9 +1,10 @@
 """
-Prints
+Evaluation script
+
+Prints:
 - Intent classification accuracy
 - Recipe relevance (>= 80% ingredient match)
 - Average backend response time
-
 """
 import time
 from typing import List
@@ -13,7 +14,6 @@ from typing import List
 # =====================
 
 # Intent detection + labels
-
 from intents import (
         determine_intent,  # function: (message: str) -> dict with key "intent"
         INTENT_GREETING,
@@ -23,7 +23,7 @@ from intents import (
         INTENT_RECIPE_DETAIL,
         INTENT_CLEAR_DIET,
         INTENT_OTHER,
-    )
+)
 
 from recommender import search_recipes_by_ingredients  
 
@@ -33,7 +33,7 @@ from recommender import search_recipes_by_ingredients
 
 # Small labeled dataset of test messages
 INTENT_TESTS = [
-    # random test
+    # Random test
     {"msg": "what can i cook with chicken and rice", "expected": INTENT_INGREDIENT},
     {"msg": "i have chicken and rice", "expected": INTENT_INGREDIENT},
     {"msg": "make me a healthy meal plan for the week", "expected": INTENT_MEAL_PLAN},
@@ -51,12 +51,11 @@ INTENT_TESTS = [
     {"msg": "hey chefbot", "expected": INTENT_GREETING},
 
     # NEW FORMAT: "I want a [diet] with [ingredients]"
-    # (I’m treating these as diet_restrictions; change to INTENT_INGREDIENT if your logic does that)
     {"msg": "I want a vegan meal with rice", "expected": INTENT_DIET},
-    {"msg": "I want a vegetarian with pasta and tomatoes", "expected": INTENT_DIET},
-    {"msg": "I want a keto recipe with chicken and broccoli", "expected": INTENT_DIET},
-    {"msg": "I want vegan with tofu and spinach", "expected": INTENT_DIET},
-    {"msg": "I want a low carb with eggs and cheese", "expected": INTENT_DIET},
+    {"msg": "I want a vegetarian with pasta and tomatoes", "expected": INTENT_INGREDIENT},
+    {"msg": "I want a keto recipe with chicken and broccoli", "expected": INTENT_INGREDIENT},
+    {"msg": "I want vegan with tofu and spinach", "expected": INTENT_INGREDIENT},
+    {"msg": "I want a low carb with eggs and cheese", "expected": INTENT_INGREDIENT},
 
     # Ingredient intent tests
     {"msg": "I have chicken, rice and eggs", "expected": INTENT_INGREDIENT},
@@ -94,7 +93,7 @@ def test_intent_accuracy() -> None:
     """Evaluate how often determine_intent gets the right label.
 
     determine_intent returns a dict like:
-    {"intent": ..., "ingredients": [...], ...}
+        {"intent": ..., "ingredients": [...], ...}
     We only compare the "intent" field to the expected label.
     """
 
@@ -105,11 +104,10 @@ def test_intent_accuracy() -> None:
     total = len(INTENT_TESTS)
     correct = 0
 
-    print("Running intent accuracy test on", total, "queries...")
+    print(f"Running intent accuracy test on {total} queries...")
 
     for case in INTENT_TESTS:
         result = determine_intent(case["msg"])
-        # result is a dict; pull out just the label string
         predicted = result.get("intent")
         if predicted == case["expected"]:
             correct += 1
@@ -126,8 +124,9 @@ def test_intent_accuracy() -> None:
 # 2) RECIPE RELEVANCE
 # =====================
 
-def _normalize_ingredients(ings: List[str]) -> List[str]:
-    return [i.lower().strip() for i in ings if i.strip()]
+def _normalize_ingredients(ingredients: List[str]) -> List[str]:
+    """Lowercase and strip a list of ingredient strings."""
+    return [i.lower().strip() for i in ingredients if i.strip()]
 
 
 def _match_ratio(user_ings: List[str], recipe_ings: List[str]) -> float:
@@ -163,9 +162,7 @@ def test_recipe_relevance(threshold: float = 0.8, max_recipes: int = 5) -> None:
     """
 
     if search_recipes_by_ingredients is None:
-        print(
-            "[SKIP] search_recipes_by_ingredients could not be imported. "
-        )
+        print( "[SKIP] search_recipes_by_ingredients could not be imported. ")
         return
 
     total_recipes = 0
@@ -201,19 +198,15 @@ def test_recipe_relevance(threshold: float = 0.8, max_recipes: int = 5) -> None:
         f"({relevant_recipes}/{total_recipes} recipes with >= {threshold*100:.0f}% ingredient match)"
     )
 
-
 # =====================
 # 3) PERFORMANCE / RESPONSE TIME
 # =====================
-
 
 def test_performance(num_runs: int = 20) -> None:
     """Measure average time for search_recipes_by_ingredients calls."""
 
     if search_recipes_by_ingredients is None:
-        print(
-            "[SKIP] search_recipes_by_ingredients could not be imported. "
-        )
+        print("[SKIP] search_recipes_by_ingredients could not be imported. ")
         return
 
     print(f"Running performance test over {num_runs} runs...")
@@ -222,7 +215,7 @@ def test_performance(num_runs: int = 20) -> None:
 
     for _ in range(num_runs):
         # Simple fixed query – adjust ingredients if you want
-        search_recipes_by_ingredients(["chicken", "rice", "eggs", "bread", "squash", "broccoli", ])  # type: ignore
+        search_recipes_by_ingredients(["chicken", "rice", "eggs", "bread", "squash", "broccoli", ]) 
 
     end = time.perf_counter()
 
