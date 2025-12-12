@@ -83,7 +83,7 @@ Starting backend and frontend separately in two terminals
 
 ### Terminal 1 - Backend
 
-From the project root:
+From the project root (/ChefBot):
 
 ```bash
 cd backend
@@ -122,6 +122,21 @@ This command starts the React (Vite) frontend. You should see something like
 
 Once both servers are running, open <http://localhost:5173> in your browser to use the chatbot.
 
+## Troubleshooting
+
+Port Already in Use:
+
+- Backend (5000):  
+  python -m flask run --port 5001  
+  
+- Frontend (5173):  
+  npm run dev -- --port=5174  
+
+Script Permission Denied:<br>
+- chmod +x setup.sh<br>
+- chmod +x start.sh
+
+---
 Note (GitHub Codespaces):
 
 - Ensure ports 5000 and 5173 are set to public.
