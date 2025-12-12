@@ -34,6 +34,8 @@ DIET_PATTERN = re.compile(r"\b(vegetarian|vegan|high protein|low carb|keto)\b", 
 # Pattern to detect recipe number requests: "1", "recipe 1", "show me 2", etc.
 RECIPE_NUMBER_PATTERN = re.compile(r"^(?:recipe\s+)?(\d+)$|^(?:show\s+(?:me\s+)?)?(\d+)$", re.IGNORECASE)
 
+CLEAR_DIET_PATTERN = re.compile(r"\bclear\s+(?:my\s+)?diet(?:\s+preferences)?\b")
+
 DIET_KEYWORDS = [
     "vegetarian", 
     "vegan", 
@@ -118,6 +120,13 @@ def determine_intent(user_input):
         number = recipe_num_match.group(1) or recipe_num_match.group(2)
         result["recipe_number"] = int(number)
         result["intent"] = INTENT_RECIPE_DETAIL
+        return result
+    
+    # Detect clear diet intent
+    if CLEAR_DIET_PATTERN.search(text_lower):
+        result["intent"] = INTENT_CLEAR_DIET
+        # Clear diet
+        result["diet_restrictions"] = []
         return result
 
     # Find diet restrictions (general extraction)
