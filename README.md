@@ -35,6 +35,7 @@ Now you can use any methods below.
 ---
 
 ## How to run
+It is recommended to use Visual Studio Code for running the project files.
 
 ### Recommended (All platforms)
 
